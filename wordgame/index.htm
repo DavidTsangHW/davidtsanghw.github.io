@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Word Game</title>
+
+<script language="javascript">
+	var NumberOfBackground = 10;	//Number of background
+	var backgroundid = 0;
+
+function getRandomInt (min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+	
+function changeBackground()
+{
+	
+	var id;
+	var filename;
+	
+	id = backgroundid;
+	
+	while(id==backgroundid)
+	{
+		id = getRandomInt(1,NumberOfBackground);
+	};
+		
+	backgroundid = id;
+	filename = 'bg (' + id + ').png';
+		
+	document.body.style.backgroundImage = "url('background/" + filename + "')";
+	document.body.style.transition = "background-image 1s ease-in-out";
+}
+
+
+	
+</script>	
+	
+<style>
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+}
+</style>
+
+</head>
+<body>
+
+<table border="0">
+<tr>
+<td>
+    <div align="center" style="font-weight: bold;text-align: center; font-size: 212px; background-color: #BCC6CC; width: 300px; display: inline-block" id="display1"></div>
+    <div style="font-weight: bold;text-align: center; font-size: 212px; background-color: #BCC6CC; width: 300px; display: inline-block" id="display2"></div>
+    <div style="font-weight: bold;text-align: center; font-size: 212px; background-color: #BCC6CC; width: 300px; display: inline-block" id="display3"></div>
+</td>
+<tr>
+<td>
+<br/><br/>
+	<button id="stopButton1" style="font-size: 108px;">START 開始</button>
+</td>
+</tr>
+</table>
+    <script>
+        let intervalId1;
+        let intervalId2;
+		let intervalId3;
+		let clickCount;
+		
+		clickCount = 0;
+
+        function startRandomDisplay1() {
+            intervalId1 = setInterval(() => {
+                const characters1 = ['瘋','風','豐','䑺','蜂','楓','峯','峰','封','鋒','烽'];
+                const randomIndex1 = Math.floor(Math.random() * characters1.length);
+                document.getElementById('display1').innerText = characters1[randomIndex1];
+            }, 500); // Change this value to adjust the frequency of character display
+        }
+
+        function startRandomDisplay2() {
+            intervalId2 = setInterval(() => {
+                const characters2 = ['滋','知','之','枝','支','諮','資','姿','芝','肢','脂'];
+                const randomIndex2 = Math.floor(Math.random() * characters2.length);
+                document.getElementById('display2').innerText = characters2[randomIndex2];
+            }, 250); // Change this value to adjust the frequency of character display
+        }
+		
+       function startRandomDisplay3() {
+            intervalId3 = setInterval(() => {
+                const characters3 = ['保','補','簿','葆','寶','堡','褓'];
+                const randomIndex3 = Math.floor(Math.random() * characters3.length);
+                document.getElementById('display3').innerText = characters3[randomIndex3];
+            }, 100); // Change this value to adjust the frequency of character display
+        }
+		
+        function stopRandomDisplay() {
+
+			changeBackground();
+			if(clickCount==0)
+			{
+				//changeBackground();
+				startRandomDisplay1();
+				startRandomDisplay2();
+				startRandomDisplay3();	
+				document.getElementById('stopButton1').innerText = 'STOP 停止';						
+			}
+					
+			if(clickCount==1)
+			{
+				clearInterval(intervalId1);				
+			}
+
+			if(clickCount==2)
+			{
+				clearInterval(intervalId2);
+			}
+
+			if(clickCount==3)
+			{
+				clearInterval(intervalId3);
+				document.getElementById('stopButton1').innerText = 'START 開始';				
+				clickCount=-1;
+			}
+	
+			clickCount++;				
+
+        }
+
+        // Stop displaying characters when the button is clicked
+        document.getElementById('stopButton1').addEventListener('mousedown', stopRandomDisplay);
+        document.getElementById('stopButton1').addEventListener('keydown', stopRandomDisplay);		
+
+		changeBackground()
+
+    </script>
+</body>
+</html>

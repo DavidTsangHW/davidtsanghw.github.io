@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>360 Image Display</title>
+    	
+	<script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+	<script language="javascript">
+	
+	// Assuming the URL is "https://example.com/?param1=value1&param2=value2"
+
+// Create a URLSearchParams object from the current window location
+const urlParams = new URLSearchParams(window.location.search);
+
+// Get the value of 'param1'
+const param1 = urlParams.get('fmt'); // returns 'value1'
+
+fmt = 'jpg'
+
+if(param1 != null)
+{
+	fmt = param1
+	
+}
+
+var idx = 0
+
+	</script>
+</head>
+<body>
+    <!-- A-Frame Scene -->
+    <a-scene  device-orientation-permission-ui="enabled: false">
+        <!-- The 360-degree image -->
+        <a-sky id='sky' src=""></a-sky>
+    </a-scene>
+	
+<script>
+
+setInterval(myTimer, 20000); // Executes myTimer every second
+
+function myTimer() {
+	idx = idx + 1	
+	var sky = document.getElementById('sky')
+	var param1 = 'img%20(' + idx + ').' + fmt	
+	
+	// Set the new src value
+	sky.setAttribute('src', param1)
+	
+	// If you're dynamically changing the src often, such as in a real-time application,
+	// you might need to update the texture's `needsUpdate` flag
+	sky.components.material.material.map.needsUpdate = true;	
+
+}
+
+
+
+</script>	
+</body>
+</html>
