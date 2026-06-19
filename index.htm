@@ -1,30 +1,384 @@
-<html>
-	<head>
-<link rel="icon" href="favicon.ico?v=2" type="image/x-icon" />
-<link rel="shortcut icon" href="favicon.ico?v=2" type="image/x-icon" />
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-SZG37NB47T"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>David Algotrading 大衛程式盤</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #d4af37;
+            --glass-bg: rgba(15, 23, 42, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-color: #ffffff;
+            --night-color: #64748b;
+        }
 
-  gtag('config', 'G-SZG37NB47T');
-</script>
-<title>David Algotrading 大衛程式盤</title>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Poppins', sans-serif;
+            background-color: #020617;
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        /* --- DYNAMIC WORLD MAP BACKGROUND --- */
+        .map-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/World_map_-_low_res.svg/1200px-World_map_-_low_res.svg.png') no-repeat center center;
+            background-size: cover;
+            filter: invert(100%) hue-rotate(180deg) brightness(0.6);
+        }
+
+        #day-night-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, 
+                rgba(0,0,0,0.9) 0%, 
+                rgba(0,0,0,0.4) 30%, 
+                rgba(255,255,255,0.15) 50%, 
+                rgba(0,0,0,0.4) 70%, 
+                rgba(0,0,0,0.9) 100%);
+            background-size: 200% 100%;
+            transition: background-position 1s ease;
+            pointer-events: none;
+        }
+
+        /* --- UI LAYOUT --- */
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+            box-sizing: border-box;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin: 0;
+            color: var(--primary-gold);
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+        }
+
+        /* --- CLOCK & FX SECTION --- */
+        .clock-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 40px;
+        }
+
+        .clock-row {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 15px 20px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+        }
+
+        .clock-row:hover {
+            border-color: var(--primary-gold);
+            transform: scale(1.01);
+        }
+
+        .time-info {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+
+        .city {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #94a3b8;
+            letter-spacing: 1px;
+        }
+
+        .time {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* Day/Night Status Styling */
+        .status-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 2px;
+            font-weight: 400;
+        }
+        .day { color: var(--primary-gold); }
+        .night { color: var(--night-color); }
+
+        .fx-widget-slot {
+            flex: 0 1 300px;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- BOOK PROMO UPDATED --- */
+        .book-promo {
+            margin-top: 20px;
+            text-align: center;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .book-cover {
+            width: 680px; /* Resized for better proportion */
+            height: auto;
+            border-radius: 6px;
+            border: 2px solid var(--primary-gold);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .book-cover:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.3);
+        }
+
+        .google-play-btn {
+            display: inline-flex;
+            align-items: center;
+            background: #000;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            border: 1px solid #444;
+            transition: 0.3s;
+        }
+
+        .google-play-btn:hover {
+            background: #111;
+            border-color: var(--primary-gold);
+            transform: scale(1.05);
+        }
+
+        .google-play-btn img {
+            width: 30px;
+            margin-right: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .clock-row {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            .time-info { text-align: center; }
+            .fx-widget-slot { width: 100%; }
+            header h1 { font-size: 1.8rem; }
+        }
+    </style>
 </head>
-<!-- myfxbook.com outlook widget - Start -->
-<div>
-    <script class="powered" type="text/javascript"
-            src="https://widgets.myfxbook.com/scripts/fxOutlook.js?type=1&symbols=,1,2,5,11,28,50,51"></script>
-</div>
-<div style="font-size: 0px">
-<a href="https://www.myfxbook.com" title="" class="myfxbookLink" target="_self" rel="noopener">
-            Powered by Myfxbook.com</a>
+<body >
+
+    <div class="map-wrapper">
+        <div id="day-night-overlay"></div>
     </div>
 
-<script type="text/javascript">showOutlookWidget()</script>
-<!-- myfxbook.com outlook widget - End -->
-<iframe id="frame1" src="https://docs.google.com/spreadsheets/u/1/d/e/2PACX-1vSIOBXDBozyIAt_sHZ-FQVIuy9664ig6jW2Jhkx4-PgY2fSNNTvAasW12_oxOc1SCCRcV87bdUiHJ5I/pubhtml?gid=0&single=true" width="100%" height="2000%"></iframe>
+    <div class="main-container">
+        <header>
+            <h1>David Algotrading 大衛程式盤</h1>
+            <p>Algotrading | Economics | Social Psychology | Forex | History | Synergies<br/>
+程式盤 經濟學 社會心理學 外匯 歷史 人際網絡</p>
+        </header>
 
+        <div class="clock-section">
+            
+            <!-- Sydney -->
+            <div class="clock-row">
+                <div class="time-info">
+                    <div class="city">Sydney</div>
+                    <div class="time" id="time-syd">00:00:00</div>
+                    <div class="status-label" id="status-syd">Loading...</div>
+                </div>
+                <div class="fx-widget-slot">
+                    <div class="tradingview-widget-container">
+                        <div class="tradingview-widget-container__widget"></div>
+                        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+                        { "symbol": "OANDA:AUDHKD", "colorTheme": "light", "isTransparent": true, "locale": "en", "width": 300 }
+                        </script>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hong Kong -->
+            <div class="clock-row">
+                <div class="time-info">
+                    <div class="city">Hong Kong 香港</div>
+                    <div class="time" id="time-hk">00:00:00</div>
+                    <div class="status-label" id="status-hk">Loading...</div>
+                </div>
+                <div class="fx-widget-slot">
+                    <div class="tradingview-widget-container">
+                        <div class="tradingview-widget-container__widget"></div>
+                        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+                        { "symbol": "FX:USDHKD", "colorTheme": "light", "isTransparent": true, "locale": "en", "width": 300 }
+                        </script>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Frankfurt -->
+            <div class="clock-row">
+                <div class="time-info">
+                    <div class="city">Eurozone Frankfurt</div>
+                    <div class="time" id="time-fra">00:00:00</div>
+                    <div class="status-label" id="status-fra">Loading...</div>
+                </div>
+                <div class="fx-widget-slot">
+                    <div class="tradingview-widget-container">
+                        <div class="tradingview-widget-container__widget"></div>
+                        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+                        { "symbol": "OANDA:EURHKD", "colorTheme": "light", "isTransparent": true, "locale": "en", "width": 300 }
+                        </script>
+                    </div>
+                </div>
+            </div>
+
+            <!-- London -->
+            <div class="clock-row">
+                <div class="time-info">
+                    <div class="city">London</div>
+                    <div class="time" id="time-lon">00:00:00</div>
+                    <div class="status-label" id="status-lon">Loading...</div>
+                </div>
+                <div class="fx-widget-slot">
+                    <div class="tradingview-widget-container">
+                        <div class="tradingview-widget-container__widget"></div>
+                        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+                        { "symbol": "OANDA:GBPHKD", "colorTheme": "light", "isTransparent": true, "locale": "en", "width": 300 }
+                        </script>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NY & LA -->
+            <div class="clock-row">
+                <div class="time-info">
+                    <div class="city">New York</div>
+                    <div class="time" id="time-ny">00:00:00</div>
+                    <div class="status-label" id="status-ny">Loading...</div>
+                    <div style="margin-top:15px" class="city">Los Angeles</div>
+                    <div class="time" id="time-la">00:00:00</div>
+                    <div class="status-label" id="status-la">Loading...</div>
+                </div>
+                <div class="fx-widget-slot">
+                    <div class="tradingview-widget-container">
+                        <div class="tradingview-widget-container__widget"></div>
+                        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js" async>
+                        { "symbol": "TVC:GOLD", "colorTheme": "light", "isTransparent": true, "locale": "en", "width": 300 }
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="book-promo">
+            <!-- Resized Image with Effect -->
+            <!--<img src="https://davidtsanghw.github.io/image/ebook.png" class="book-cover" alt="Ebook Cover">-->
+			<img src="https://davidtsanghw.github.io/image/20240207_162540.jpg" class="book-cover" alt="Ebook Cover">
+            
+            <p style="margin-bottom: 20px; font-weight: 300; color: #94a3b8; max-width: 900px;">
+                Physical copy is sold out. Rental copy is registered at Hong Kong public library.<br/>
+                實體印刷版已售罄. 現於香港公共圖書館註冊以供借閱. ISBN 9789887045502
+            </p>
+            <a href="https://play.google.com/store/books/details?id=d3XzEAAAQBAJ&fbclid" target="_blank" class="google-play-btn">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play">
+                GET THE BOOK ON GOOGLE PLAY
+            </a>
+        </div>
+    </div>
+
+    <script>
+        /** 1. DYNAMIC DAY/NIGHT OVERLAY **/
+        function updateDayNight() {
+            const overlay = document.getElementById('day-night-overlay');
+            const now = new Date();
+            const utcHours = now.getUTCHours();
+            const percentage = (utcHours / 24) * 100;
+            overlay.style.backgroundPosition = `${percentage}% 0%`;
+        }
+
+        /** 2. LOCAL MARKET CLOCKS & STATUS **/
+        function updateClocks() {
+            const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            
+            const zones = {
+                'time-ny': { zone: 'America/New_York', statusId: 'status-ny' },
+                'time-la': { zone: 'America/Los_Angeles', statusId: 'status-la' },
+                'time-lon': { zone: 'Europe/London', statusId: 'status-lon' },
+                'time-fra': { zone: 'Europe/Berlin', statusId: 'status-fra' },
+                'time-hk': { zone: 'Asia/Hong_Kong', statusId: 'status-hk' },
+                'time-syd': { zone: 'Australia/Sydney', statusId: 'status-syd' }
+            };
+
+            Object.keys(zones).forEach(id => {
+                const zoneInfo = zones[id];
+                const now = new Date();
+                
+                document.getElementById(id).innerText = now.toLocaleTimeString('en-US', { ...options, timeZone: zoneInfo.zone });
+                
+                const hourString = now.toLocaleTimeString('en-US', { hour: 'numeric', hour12: false, timeZone: zoneInfo.zone });
+                const hour = parseInt(hourString);
+                
+                const statusEl = document.getElementById(zoneInfo.statusId);
+                if (hour >= 6 && hour < 18) {
+                    statusEl.innerText = "☀️ DAY";
+                    statusEl.className = "status-label day";
+                } else {
+                    statusEl.innerText = "🌙 NIGHT";
+                    statusEl.className = "status-label night";
+                }
+            });
+        }
+
+        setInterval(updateClocks, 1000);
+        setInterval(updateDayNight, 60000);
+
+        updateClocks();
+        updateDayNight();
+    </script>
+</body>
 </html>
