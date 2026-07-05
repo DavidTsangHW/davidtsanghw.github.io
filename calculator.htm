@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Calculator | David Algotrading</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #d4af37;
+            --glass-bg: rgba(15, 23, 42, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-color: #ffffff;
+            --input-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: #020617;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- NAVIGATION MENU --- */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px 0;
+            background: rgba(2, 6, 23, 0.7);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 1000;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links li a {
+            text-decoration: none;
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            opacity: 0.8;
+        }
+
+        .nav-links li a:hover, .nav-links li a.active {
+            color: var(--primary-gold);
+            opacity: 1;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+
+        /* --- DYNAMIC WORLD MAP BACKGROUND --- */
+        .map-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/World_map_-_low_res.svg/1200px-World_map_-_low_res.svg.png') no-repeat center center;
+            background-size: cover;
+            filter: invert(100%) hue-rotate(180deg) brightness(0.6);
+        }
+
+        #day-night-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, 
+                rgba(0,0,0,0.9) 0%, 
+                rgba(0,0,0,0.4) 30%, 
+                rgba(255,255,255,0.15) 50%, 
+                rgba(0,0,0,0.4) 70%, 
+                rgba(0,0,0,0.9) 100%);
+            background-size: 200% 100%;
+            pointer-events: none;
+        }
+
+        /* --- MAIN CONTAINER --- */
+        .calculator-card {
+            position: relative;
+            width: 90%;
+            max-width: 500px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin: 80px 0 2rem 0; /* Top margin to account for nav */
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 0;
+            color: var(--primary-gold);
+            text-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+        }
+
+        header .brand-sub {
+            font-size: 1rem;
+            display: block;
+            margin-top: 5px;
+            color: #fff;
+            font-weight: 300;
+        }
+
+        /* --- FORM ELEMENTS --- */
+        .field {
+            margin-bottom: 1.2rem;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: .5rem;
+            font-weight: 400;
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .lang-zh {
+            display: block;
+            font-weight: 300;
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: #fff;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .field input:focus {
+            outline: none;
+            border-color: var(--primary-gold);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+        }
+
+        button {
+            width: 100%;
+            background: var(--primary-gold);
+            color: #000;
+            border: none;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background: #f1c40f;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        /* --- RESULTS SECTION --- */
+        .results {
+            margin-top: 2rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary-gold);
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .results p {
+            margin: .8rem 0;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .results p span {
+            color: var(--primary-gold);
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            .calculator-card {
+                padding: 1.5rem;
+            }
+            header h1 { font-size: 1.5rem; }
+            .nav-links { gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <ul class="nav-links">
+            <li><a href="index.htm">Home</a></li>
+            <li><a href="calculator.htm" class="active">交易計算機 Trading Calculator</a></li>
+        </ul>
+    </nav>
+
+    <div class="map-wrapper">
+        <div id="day-night-overlay"></div>
+    </div>
+
+    <div class="calculator-card">
+        <header>
+            <h1>David Algotrading<br/>大衛程式盤</h1>
+            <span class="brand-sub">交易計算機 | Trading Calculator</span>
+        </header>
+
+        <div class="field">
+            <label for="targetIncome">
+                Target annual income (HKD)
+                <span class="lang-zh">年度目標收入 (港幣)</span>
+            </label>
+            <input type="number" id="targetIncome" placeholder="600000">
+        </div>
+
+        <div class="field">
+            <label for="tradeDays">
+                Number of trade days
+                <span class="lang-zh">交易天數</span>
+            </label>
+            <input type="number" id="tradeDays" placeholder="252">
+        </div>
+
+        <div class="field">
+            <label for="tradePerDays">
+                Trades per day
+                <span class="lang-zh">每日交易次數</span>
+            </label>
+            <input type="number" id="tradePerDays" placeholder="4">
+        </div>
+
+        <div class="field">
+            <label for="exchRate">
+                Current exchange rate
+                <span class="lang-zh">目前匯率</span>
+            </label>
+            <input type="number" step="any" id="exchRate" placeholder="5.5">
+        </div>
+
+        <div class="field">
+            <label for="lotAmount">
+                Amount per trade (HKD)
+                <span class="lang-zh">每筆交易金額 (港幣)</span>
+            </label>
+            <input type="number" id="lotAmount" placeholder="360000">
+        </div>
+
+        <button id="calcBtn">Calculate / 計算</button>
+
+        <div class="results" id="output" style="display:none;">
+            <p>Daily income / 每日收入: <span id="dailyIncome"></span></p>
+            <p>Hourly (24hr) / 每小時: <span id="hourlyIncome"></span></p>
+            <p>Profit per trade / 每筆利潤: <span id="profitPerTrade"></span></p>
+            <p>Profit % / 每筆利潤%: <span id="profitPctPerTrade"></span></p>
+            <p>Trading range / 價格區間: <span id="tradingRange"></span></p>
+        </div>
+    </div>
+
+    <script>
+        function getValueOrDefault(elementId, defaultVal) {
+            const el = document.getElementById(elementId);
+            const raw = el.value.trim();
+            return raw === '' ? defaultVal : Number(raw);
+        }
+
+        function calculate() {
+            const defaults = {
+                targetIncome: 600000,
+                tradeDays: 252,
+                tradePerDays: 4,
+                exchRate: 5.5,
+                lotAmount: 360000
+            };
+
+            const targetIncome = getValueOrDefault('targetIncome', defaults.targetIncome);
+            const tradeDays    = getValueOrDefault('tradeDays',    defaults.tradeDays);
+            const tradePerDays = getValueOrDefault('tradePerDays', defaults.tradePerDays);
+            const exchRate     = getValueOrDefault('exchRate',     defaults.exchRate);
+            const lotAmount    = getValueOrDefault('lotAmount',    defaults.lotAmount);
+
+            const dailyIncome = Math.round(targetIncome / tradeDays);
+            const hourlyIncome = Math.round(dailyIncome / 24); 
+            const profitPerTrade = Math.round(dailyIncome / tradePerDays);
+            const profitPctPerTrade = profitPerTrade / lotAmount;
+
+            const spread = Math.round((exchRate * profitPctPerTrade) * 10000) / 10000;
+            const upperLimit = Math.round((exchRate + spread) * 10000) / 10000;
+            const lowerLimit = Math.round((exchRate - spread) * 10000) / 10000;
+
+            document.getElementById('dailyIncome').textContent = dailyIncome;
+            document.getElementById('hourlyIncome').textContent = hourlyIncome;
+            document.getElementById('profitPerTrade').textContent = profitPerTrade;
+            document.getElementById('profitPctPerTrade').textContent = (profitPctPerTrade * 100).toFixed(4) + '%';
+            document.getElementById('tradingRange').textContent = `${lowerLimit} - ${upperLimit}`;
+
+            document.getElementById('output').style.display = 'block';
+        }
+
+        document.getElementById('calcBtn').addEventListener('click', calculate);
+
+        function updateDayNight() {
+            const overlay = document.getElementById('day-night-overlay');
+            const now = new Date();
+            const utcHours = now.getUTCHours();
+            const percentage = (utcHours / 24) * 100;
+            overlay.style.backgroundPosition = `${percentage}% 0%`;
+        }
+        setInterval(updateDayNight, 60000);
+        updateDayNight();
+    </script>
+</body>
+</html>

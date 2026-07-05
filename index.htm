@@ -24,6 +24,47 @@
             overflow-x: hidden;
         }
 
+        /* --- NAVIGATION MENU --- */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px 0;
+            background: rgba(2, 6, 23, 0.7);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 1000;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links li a {
+            text-decoration: none;
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            opacity: 0.8;
+        }
+
+        .nav-links li a:hover, .nav-links li a.active {
+            color: var(--primary-gold);
+            opacity: 1;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+
         /* --- DYNAMIC WORLD MAP BACKGROUND --- */
         .map-wrapper {
             position: fixed;
@@ -60,7 +101,7 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 100px 20px 40px 20px; /* Increased top padding for nav */
             box-sizing: border-box;
         }
 
@@ -117,7 +158,6 @@
             font-size: 2.0rem;
 			border-radius: 8px;
             text-transform: uppercase;
-            <!---color: #94a3b8;-->
 			color: #FFFFFF;
             letter-spacing: 1px;
 			font-weight: 600;
@@ -130,7 +170,6 @@
             color: #fff;
         }
 
-        /* Day/Night Status Styling */
         .status-label {
             font-size: 1rem;
             text-transform: uppercase;
@@ -152,7 +191,7 @@
             justify-content: center;
         }
 
-        /* --- BOOK PROMO UPDATED --- */
+        /* --- BOOK PROMO --- */
         .book-promo {
             margin-top: 20px;
             text-align: center;
@@ -163,7 +202,7 @@
         }
 
         .book-cover {
-            width: 680px; /* Resized for better proportion */
+            width: 680px;
             height: auto;
             border-radius: 6px;
             border: 2px solid var(--primary-gold);
@@ -211,10 +250,18 @@
             .time-info { text-align: center; }
             .fx-widget-slot { width: 100%; }
             header h1 { font-size: 1.8rem; }
+            .nav-links { gap: 15px; }
         }
     </style>
 </head>
-<body >
+<body>
+
+    <nav class="navbar">
+        <ul class="nav-links">
+            <li><a href="index.htm" class="active">Home</a></li>
+			<li><a href="calculator.htm" class="active">交易計算機 Trading Calculator</a></li>
+        </ul>
+    </nav>
 
     <div class="map-wrapper">
         <div id="day-night-overlay"></div>
@@ -228,7 +275,6 @@
         </header>
 
         <div class="clock-section">
-            
             <!-- Sydney -->
             <div class="clock-row">
                 <div class="time-info">
@@ -319,8 +365,6 @@
         </div>
 
         <div class="book-promo">
-            <!-- Resized Image with Effect -->
-            <!--<img src="https://davidtsanghw.github.io/image/ebook.png" class="book-cover" alt="Ebook Cover">-->
 			<p style="margin-bottom: 20px; font-weight: 800; color: #FFFFFF; max-width: 900px; font-size: 2.0rem;">
 			程式盤 DIY 2024 <br/>Programmatic Investment DIY 2024</p>
 			 <p style="margin-bottom: 20px; font-weight: 400; color: #FFFFFF; max-width: 900px;">
@@ -335,14 +379,11 @@
 			<a href="https://play.google.com/store/books/details?id=d3XzEAAAQBAJ&fbclid" target="_blank">
 			<img src="https://davidtsanghw.github.io/image/20240207_162540.jpg" class="book-cover" alt="Ebook Cover">
 			</a>
-            
-           
-
+            </p>
         </div>
     </div>
 
     <script>
-        /** 1. DYNAMIC DAY/NIGHT OVERLAY **/
         function updateDayNight() {
             const overlay = document.getElementById('day-night-overlay');
             const now = new Date();
@@ -351,10 +392,8 @@
             overlay.style.backgroundPosition = `${percentage}% 0%`;
         }
 
-        /** 2. LOCAL MARKET CLOCKS & STATUS **/
         function updateClocks() {
             const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-            
             const zones = {
                 'time-ny': { zone: 'America/New_York', statusId: 'status-ny' },
                 'time-la': { zone: 'America/Los_Angeles', statusId: 'status-la' },
@@ -367,12 +406,9 @@
             Object.keys(zones).forEach(id => {
                 const zoneInfo = zones[id];
                 const now = new Date();
-                
                 document.getElementById(id).innerText = now.toLocaleTimeString('en-US', { ...options, timeZone: zoneInfo.zone });
-                
                 const hourString = now.toLocaleTimeString('en-US', { hour: 'numeric', hour12: false, timeZone: zoneInfo.zone });
                 const hour = parseInt(hourString);
-                
                 const statusEl = document.getElementById(zoneInfo.statusId);
                 if (hour >= 6 && hour < 18) {
                     statusEl.innerText = "☀️ DAY";
@@ -386,7 +422,6 @@
 
         setInterval(updateClocks, 1000);
         setInterval(updateDayNight, 60000);
-
         updateClocks();
         updateDayNight();
     </script>
