@@ -2,155 +2,240 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Blood Pressure Recorder</title>
+<title>Blood‑Pressure Recorder – Mobile Friendly</title>
 <style>
-  body {font-family: Arial,sans-serif; margin:2rem; background:#f8f9fa;}
-  h1 {color:#343a40;}
-  form {background:#fff; padding:1.5rem; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,.1);}
-  label {display:block; margin-top:.8rem; font-weight:600;}
-  input, textarea {width:100%; padding:.5rem; margin-top:.2rem; box-sizing:border-box;}
-  input[type=number] {max-width:120px;}
-  button {margin-top:1rem; padding:.6rem 1.2rem; border:none; border-radius:4px; cursor:pointer;}
-  #actions button {margin-right:.5rem;}
-  table {width:100%; border-collapse:collapse; margin-top:2rem; background:#fff;}
-  th, td {border:1px solid #dee2e6; padding:.5rem; text-align:left;}
+  /* ---------- Global ----------
+   * Base font large enough for a thumb‑friendly UI.
+   */
+  html {font-size: 18px;}                  /* ≈ 18 px = comfortable reading on phones */
+  body {
+    font-family: Arial,Helvetica,sans-serif;
+    margin: 1rem;
+    background: #f8f9fa;
+    color: #212529;
+    line-height: 1.4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    margin-bottom: .8rem;
+    color: #343a40;
+    text-align: center;
+  }
+
+  /* ---------- Form ----------
+   * Max‑width 480 px (good for most phones) and 90 % of the viewport when the screen is very narrow.
+   */
+  form {
+    width: 90%;
+    max-width: 480px;
+    background: #fff;
+    padding: 1.2rem;
+    border-radius: .6rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,.1);
+    box-sizing: border-box;
+  }
+
+  label {
+    display: block;
+    margin-top: .9rem;
+    font-weight: 600;
+    font-size: .95rem;
+  }
+
+  input, textarea {
+    width: 100%;
+    padding: .55rem;
+    margin-top: .3rem;
+    font-size: 1rem;
+    box-sizing: border-box;
+    border: 1px solid #ced4da;
+    border-radius: .4rem;
+  }
+
+  input[type=number] {max-width: 100%;}   /* full width on phones */
+  textarea {resize: vertical;}
+
+  button[type=submit] {
+    margin-top: 1rem;
+    width: 100%;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    padding: .7rem;
+    font-size: 1rem;
+    border-radius: .4rem;
+    cursor: pointer;
+  }
+  button[type=submit]:hover {background:#0056b3;}
+
+  .msg {
+    display: block;
+    margin-top: .6rem;
+    font-size: .9rem;
+    color: #d9534f;
+  }
+
+  /* ---------- Action Buttons ----------
+   * Stacked vertically on a phone, but they stay left‑aligned for a tidy look.
+   */
+  #actions {
+    width: 90%;
+    max-width: 480px;
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+  }
+  #actions button {
+    padding: .6rem;
+    font-size: .95rem;
+    border: none;
+    border-radius: .4rem;
+    cursor: pointer;
+  }
+  #listBtn    {background:#28a745; color:#fff;}
+  #deleteBtn  {background:#dc3545; color:#fff;}
+  #exportBtn  {background:#17a2b8; color:#fff;}
+  #actions button:hover {opacity:.9;}
+
+  /* ---------- Table ----------
+   * Makes the table scrollable when it overflows the viewport width.
+   */
+  #recordsContainer {
+    width: 90%;
+    max-width: 480px;
+    margin-top: 1.5rem;
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background:#fff;
+    font-size:.9rem;
+  }
+  th, td {
+    border: 1px solid #dee2e6;
+    padding: .45rem;
+    text-align: left;
+  }
   th {background:#e9ecef;}
-  .msg {margin-top:1rem; color:#d9534f;}
 </style>
 </head>
 <body>
 
-<h1>Blood Pressure Recorder</h1>
+<h1>Blood‑Pressure Recorder</h1>
 
 <form id="bpForm">
-  <label for="systolic">Systolic (mm Hg)</label>
-  <input type="number" id="systolic" name="systolic" min="0" placeholder="120" required>
+  <label for="systolic">Systolic (mm Hg)</label>
+  <input type="number" id="systolic" name="systolic" min="0" required>
 
-  <label for="diastolic">Diastolic (mm Hg)</label>
-  <input type="number" id="diastolic" name="diastolic" placeholder="80" min="0" required>
+  <label for="diastolic">Diastolic (mm Hg)</label>
+  <input type="number" id="diastolic" name="diastolic" min="0" required>
 
-  <label for="hr">Heart-Rate (bpm)</label>
-  <input type="number" id="hr" name="hr" min="0" placeholder="75" required>
+  <label for="hr">Heart‑Rate (bpm)</label>
+  <input type="number" id="hr" name="hr" min="0" required>
 
   <label for="remark">Remark (optional)</label>
-  <textarea id="remark" name="remark" rows="2" placeholder="e.g. after exercise, taken while seated"></textarea>
+  <textarea id="remark" name="remark" rows="2"
+            placeholder="e.g. after exercise, taken while seated…"></textarea>
 
   <button type="submit">Save Record</button>
   <span class="msg" id="msg"></span>
 </form>
 
-<div id="actions" style="margin-top:2rem;">
-  <button id="listBtn">List All Local Records</button>
+<div id="actions">
+  <button id="listBtn">List All Records</button>
   <button id="deleteBtn">Delete All Records</button>
   <button id="exportBtn">Export as CSV</button>
 </div>
 
-<!-- Placeholder for the records table -->
 <div id="recordsContainer"></div>
 
 <script>
-/* ---------- IndexedDB Setup ---------- */
+/* ---------- IndexedDB ---------- */
 const DB_NAME = 'bpRecorderDB';
 const STORE_NAME = 'readings';
 const DB_VERSION = 1;
 let db;
 
-/**
- * Open (or create) the IndexedDB database.
- */
 function openDB() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => {
-      db = request.result;
-      resolve(db);
-    };
-    request.onupgradeneeded = e => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => { db = req.result; resolve(db); };
+    req.onupgradeneeded = e => {
       const db = e.target.result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-        store.createIndex('timestamp', 'timestamp', { unique: false });
+        const store = db.createObjectStore(STORE_NAME, {keyPath:'id', autoIncrement:true});
+        store.createIndex('timestamp','timestamp');
       }
     };
   });
 }
 
-/* ---------- Helper Functions ---------- */
-
-/**
- * Add a new record.
- */
-async function addRecord(record) {
+/* ---------- CRUD helpers ---------- */
+function addRecord(rec) {
   const tx = db.transaction(STORE_NAME, 'readwrite');
   const store = tx.objectStore(STORE_NAME);
-  await store.add(record);
+  store.add(rec);
   return tx.complete;
 }
-
-/**
- * Retrieve *all* records.
- */
 function getAllRecords() {
-  return new Promise((resolve, reject) => {
+  return new Promise((res, rej) => {
     const tx = db.transaction(STORE_NAME, 'readonly');
     const store = tx.objectStore(STORE_NAME);
-    const request = store.getAll();
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    const req = store.getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
   });
 }
-
-/**
- * Delete every record.
- */
 function clearAllRecords() {
-  return new Promise((resolve, reject) => {
+  return new Promise((res, rej) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
-    const request = store.clear();
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
+    const req = store.clear();
+    req.onsuccess = () => res();
+    req.onerror = () => rej(req.error);
   });
 }
-
-/**
- * Convert an array of objects to CSV text.
- */
-function toCSV(data) {
-  const header = ['id', 'timestamp', 'systolic', 'diastolic', 'heartRate', 'remark'];
-  const rows = data.map(r => [
+function toCSV(arr) {
+  const header = ['id','timestamp','systolic','diastolic','heartRate','remark'];
+  const rows = arr.map(r => [
     r.id,
     new Date(r.timestamp).toISOString(),
     r.systolic,
     r.diastolic,
     r.heartRate,
-    r.remark ? `"${r.remark.replace(/"/g, '""')}"` : ''
+    r.remark ? `"${r.remark.replace(/"/g,'"')}"` : ''
   ].join(','));
-
   return [header.join(','), ...rows].join('\r\n');
 }
 
-/* ---------- UI Interaction ---------- */
+/* ---------- UI ---------- */
 document.addEventListener('DOMContentLoaded', async () => {
   await openDB();
 
   const form = document.getElementById('bpForm');
-  const msgEl = document.getElementById('msg');
+  const msg  = document.getElementById('msg');
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
-    const systolic = +form.systolic.value;
+
+    const systolic  = +form.systolic.value;
     const diastolic = +form.diastolic.value;
     const heartRate = +form.hr.value;
-    const remark = form.remark.value.trim();
+    const remark    = form.remark.value.trim();
 
-    if (isNaN(systolic) || isNaN(diastolic) || isNaN(heartRate)) {
-      msgEl.textContent = 'Please enter valid numbers.';
+    if (isNaN(systolic)||isNaN(diastolic)||isNaN(heartRate)) {
+      msg.textContent = 'Please enter valid numeric values.';
       return;
     }
 
-    const record = {
+    const rec = {
       timestamp: Date.now(),
       systolic,
       diastolic,
@@ -159,85 +244,70 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     try {
-      await addRecord(record);
-      msgEl.style.color = '#28a745';
-      msgEl.textContent = 'Saved locally';
+      await addRecord(rec);
+      msg.style.color = '#28a745';
+      msg.textContent = 'Saved!';
       form.reset();
-      // optional: refresh list automatically
     } catch (err) {
       console.error(err);
-      msgEl.style.color = '#d9534f';
-      msgEl.textContent = 'Failed to save record.';
+      msg.style.color = '#d9534f';
+      msg.textContent = 'Save failed.';
     }
-    setTimeout(() => (msgEl.textContent = ''), 3000);
+    setTimeout(()=>msg.textContent='',3000);
   });
 
-  /* ----------------- Buttons ----------------- */
   document.getElementById('listBtn').addEventListener('click', async () => {
-    const records = await getAllRecords();
-    renderTable(records);
+    const data = await getAllRecords();
+    renderTable(data);
   });
 
   document.getElementById('deleteBtn').addEventListener('click', async () => {
-    if (!confirm('??  Are you sure you want to delete EVERY record? This cannot be undone.')) return;
+    if (!confirm('⚠️  Delete EVERY record? This cannot be undone.')) return;
     await clearAllRecords();
     document.getElementById('recordsContainer').innerHTML = '';
-    alert('All records deleted.');
+    alert('All records removed.');
   });
 
   document.getElementById('exportBtn').addEventListener('click', async () => {
-    const records = await getAllRecords();
-    if (!records.length) {
-      alert('No data to export.');
-      return;
-    }
-    const csv = toCSV(records);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const data = await getAllRecords();
+    if (!data.length) { alert('No data to export.'); return; }
+    const csv = toCSV(data);
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement('a');
     a.href = url;
-    const now = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    const now = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
     a.download = `bp-records-${now}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   });
 });
 
-/* ----------------- Rendering ----------------- */
-function renderTable(data) {
+/* ---------- Table render ---------- */
+function renderTable(arr) {
   const container = document.getElementById('recordsContainer');
-  if (!data.length) {
-    container.innerHTML = '<p>No records found.</p>';
+  if (!arr.length) {
+    container.innerHTML = '<p>No records yet.</p>';
     return;
   }
 
   const table = document.createElement('table');
-  const thead = `<thead>
+  const head = `<thead>
     <tr>
-      <th>#</th>
-      <th>Timestamp</th>
-      <th>Systolic</th>
-      <th>Diastolic</th>
-      <th>Heart-Rate</th>
-      <th>Remark</th>
-    </tr>
-  </thead>`;
-  const tbody = data
-    .map(r => {
-      const date = new Date(r.timestamp);
-      const fmt = date.toLocaleString();
-      return `<tr>
-        <td>${r.id}</td>
-        <td>${fmt}</td>
-        <td>${r.systolic}</td>
-        <td>${r.diastolic}</td>
-        <td>${r.heartRate}</td>
-        <td>${r.remark ? r.remark : ''}</td>
-      </tr>`;
-    })
-    .join('');
-  table.innerHTML = thead + `<tbody>${tbody}</tbody>`;
+      <th>#</th><th>Timestamp</th><th>Systolic</th><th>Diastolic</th><th>HR</th><th>Remark</th>
+    </tr></thead>`;
+  const body = arr.map(r => {
+    const d = new Date(r.timestamp);
+    return `<tr>
+      <td>${r.id}</td>
+      <td>${d.toLocaleString()}</td>
+      <td>${r.systolic}</td>
+      <td>${r.diastolic}</td>
+      <td>${r.heartRate}</td>
+      <td>${r.remark||''}</td>
+    </tr>`;
+  }).join('');
+  table.innerHTML = head + `<tbody>${body}</tbody>`;
   container.innerHTML = '';
   container.appendChild(table);
 }
