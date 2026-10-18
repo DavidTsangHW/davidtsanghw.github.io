@@ -163,7 +163,7 @@ let db;
 function formatTimestamp(date) {
   const pad = n => String(n).padStart(2, '0');
   const year   = date.getFullYear();
-  const month  = pad(date.getMonth() + 1);   // months are 0‑based
+  const month  = pad(date.getMonth() + 1);
   const day    = pad(date.getDate());
   const hour   = pad(date.getHours());
   const minute = pad(date.getMinutes());
@@ -216,7 +216,7 @@ function toCSV(arr) {
   const header = ['id','timestamp','systolic','diastolic','heartRate','remark'];
   const rows = arr.map(r => [
     r.id,
-    r.timestamp,                     // already in YYYY/MM/DD HH:MM:SS
+    r.timestamp,                     // already formatted
     r.systolic,
     r.diastolic,
     r.heartRate,
@@ -228,6 +228,10 @@ function toCSV(arr) {
 /* ---------- UI ---------- */
 document.addEventListener('DOMContentLoaded', async () => {
   await openDB();
+
+  // ---- focus the systolic field as soon as the page is ready ----
+  const systolicInput = document.getElementById('systolic');
+  if (systolicInput) systolicInput.focus();
 
   const form = document.getElementById('bpForm');
   const msg  = document.getElementById('msg');
@@ -246,7 +250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const rec = {
-      timestamp: formatTimestamp(new Date()), // <-- formatted string
+      timestamp: formatTimestamp(new Date()), // formatted string
       systolic,
       diastolic,
       heartRate,
@@ -258,6 +262,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       msg.style.color = '#28a745';
       msg.textContent = 'Saved!';
       form.reset();
+      // return focus to the systolic field after a reset
+      systolicInput.focus();
     } catch (err) {
       console.error(err);
       msg.style.color = '#d9534f';
