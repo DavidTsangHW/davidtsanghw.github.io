@@ -100,6 +100,11 @@
   #listBtn    {background:#28a745; color:#fff;}
   #deleteBtn  {background:#dc3545; color:#fff;}
   #exportBtn  {background:#17a2b8; color:#fff;}
+   #importBtn  {background:#6c757d; color:#fff;}   /* new button */
+  #actions button:hover {opacity:.9;}
+
+  /* hide the native file picker – we trigger it programmatically */
+  #fileInput {display:none;}
   #actions button:hover {opacity:.9;}
 
   /* ---------- Table ----------
@@ -148,6 +153,8 @@
   <button id="listBtn">List All Records</button>
   <button id="deleteBtn">Delete All Records</button>
   <button id="exportBtn">Export as CSV</button>
+  <button id="importBtn">Import CSV</button>      <!-- new button -->
+  <input type="file" id="fileInput" accept=".csv"> <!-- hidden file input -->
 </div>
 
 <div id="recordsContainer"></div>
@@ -189,10 +196,15 @@ function openDB() {
 
 /* ---------- CRUD helpers ---------- */
 function addRecord(rec) {
-  const tx = db.transaction(STORE_NAME, 'readwrite');
-  const store = tx.objectStore(STORE_NAME);
-  store.add(rec);
-  return tx.complete;
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.add(rec);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror   = () => reject(req.error);
+    tx.oncomplete = () => resolve();
+    tx.onerror    = () => reject(tx.error);
+  });
 }
 function getAllRecords() {
   return new Promise((res, rej) => {
@@ -225,11 +237,42 @@ function toCSV(arr) {
   return [header.join(','), ...rows].join('\r\n');
 }
 
+/* ---------- Simple CSV parser (handles quoted fields) ---------- */
+function parseCSV(csvText) {
+  const lines = csvText.trim().split(/\r?\n/);
+  const header = lines.shift().split(',');
+  const rows = lines.map(line => {
+    const fields = [];
+    let cur = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"' && line[i - 1] !== '\\') {
+        inQuotes = !inQuotes;
+        continue;
+      }
+      if (ch === ',' && !inQuotes) {
+        fields.push(cur);
+        cur = '';
+      } else {
+        cur += ch;
+      }
+    }
+    fields.push(cur); // last field
+
+    const obj = {};
+    header.forEach((h, i) => obj[h] = fields[i] ?? '');
+    return obj;
+  });
+  return rows;
+}
+
 /* ---------- UI ---------- */
 document.addEventListener('DOMContentLoaded', async () => {
   await openDB();
 
-  // ---- focus the systolic field as soon as the page is ready ----
+  /* ---- focus the systolic field ---- */
   const systolicInput = document.getElementById('systolic');
   if (systolicInput) systolicInput.focus();
 
@@ -250,7 +293,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const rec = {
-      timestamp: formatTimestamp(new Date()), // formatted string
+      timestamp: formatTimestamp(new Date()),
       systolic,
       diastolic,
       heartRate,
@@ -262,7 +305,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       msg.style.color = '#28a745';
       msg.textContent = 'Saved!';
       form.reset();
-      // return focus to the systolic field after a reset
       systolicInput.focus();
     } catch (err) {
       console.error(err);
@@ -272,11 +314,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(()=>msg.textContent='',3000);
   });
 
+  /* ---- List ---- */
   document.getElementById('listBtn').addEventListener('click', async () => {
     const data = await getAllRecords();
     renderTable(data);
   });
 
+  /* ---- Delete ---- */
   document.getElementById('deleteBtn').addEventListener('click', async () => {
     if (!confirm('⚠️  Delete EVERY record? This cannot be undone.')) return;
     await clearAllRecords();
@@ -284,6 +328,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     alert('All records removed.');
   });
 
+  /* ---- Export ---- */
   document.getElementById('exportBtn').addEventListener('click', async () => {
     const data = await getAllRecords();
     if (!data.length) { alert('No data to export.'); return; }
@@ -297,6 +342,68 @@ document.addEventListener('DOMContentLoaded', async () => {
     a.click();
     URL.revokeObjectURL(url);
   });
+
+  /* ---- Import ---- */
+  const importBtn = document.getElementById('importBtn');
+  const fileInput = document.getElementById('fileInput');
+
+  importBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const text = await file.text();
+
+    let rows;
+    try { rows = parseCSV(text); }
+    catch (err) {
+      alert('Failed to parse CSV. Make sure the file is formatted correctly.');
+      return;
+    }
+
+    const existing = await getAllRecords();
+    const existingKeySet = new Set(
+      existing.map(r => `${r.timestamp}|${r.systolic}|${r.diastolic}|${r.heartRate}|${r.remark||''}`)
+    );
+
+    let added = 0, duplicates = 0;
+    for (const row of rows) {
+      // Expect: id,timestamp,systolic,diastolic,heartRate,remark
+      const timestamp = row.timestamp?.trim();
+      const systolic  = Number(row.systolic);
+      const diastolic = Number(row.diastolic);
+      const heartRate = Number(row.heartRate);
+      // Undo the quoting that exportCSV adds
+      let remark = row.remark ?? '';
+      if (remark.startsWith('"') && remark.endsWith('"')) {
+        remark = remark.slice(1, -1).replace(/""/g,'"');
+      }
+      remark = remark.trim() || null;
+
+      // Basic validation – skip rows that are clearly broken
+      if (!timestamp || isNaN(systolic)||isNaN(diastolic)||isNaN(heartRate)) continue;
+
+      const key = `${timestamp}|${systolic}|${diastolic}|${heartRate}|${remark||''}`;
+      if (existingKeySet.has(key)) {
+        duplicates++;
+        continue;
+      }
+
+      const rec = {timestamp, systolic, diastolic, heartRate, remark};
+      try {
+        await addRecord(rec);
+        existingKeySet.add(key);
+        added++;
+      } catch (err) {
+        console.error('Failed to add record', err);
+      }
+    }
+
+    alert(`Import finished.\nAdded: ${added}\nDuplicates ignored: ${duplicates}`);
+    // reset the file input so the same file can be chosen again if needed
+    fileInput.value = '';
+  });
+
 });
 
 /* ---------- Table render ---------- */
