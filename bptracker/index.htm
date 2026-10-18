@@ -2,125 +2,107 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Blood‑Pressure Recorder – Mobile Friendly</title>
+<title>Blood‑Pressure Recorder – Full‑Screen</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-  /* ---------- Global ----------
-   * Base font large enough for a thumb‑friendly UI.
-   */
-  html {font-size: 18px;}                  /* ≈ 18 px = comfortable reading on phones */
+  /* ---------- Global ---------- */
+  html {font-size:18px;}               /* larger text for touch devices   */
   body {
     font-family: Arial,Helvetica,sans-serif;
-    margin: 1rem;
-    background: #f8f9fa;
-    color: #212529;
-    line-height: 1.4;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    margin:0;
+    background:#f8f9fa;
+    color:#212529;
+    line-height:1.4;
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;                  /* make body fill the screen      */
   }
 
   h1 {
-    font-size: 1.6rem;
-    margin-bottom: .8rem;
-    color: #343a40;
-    text-align: center;
+    font-size:1.6rem;
+    margin:0.8rem 0;
+    text-align:center;
+    color:#343a40;
   }
 
-  /* ---------- Form ----------
-   * Max‑width 480 px (good for most phones) and 90 % of the viewport when the screen is very narrow.
-   */
+  /* ---------- Form (full width) ---------- */
   form {
-    width: 90%;
-    max-width: 480px;
-    background: #fff;
-    padding: 1.2rem;
-    border-radius: .6rem;
-    box-shadow: 0 2px 6px rgba(0,0,0,.1);
-    box-sizing: border-box;
+    width:100%;                        /* <-- full‑screen width            */
+    padding:1rem 1.2rem;
+    background:#fff;
+    box-shadow:0 2px 6px rgba(0,0,0,.1);
+    box-sizing:border-box;
   }
 
   label {
-    display: block;
-    margin-top: .9rem;
-    font-weight: 600;
-    font-size: .95rem;
+    display:block;
+    margin-top:.9rem;
+    font-weight:600;
+    font-size:.95rem;
   }
 
   input, textarea {
-    width: 100%;
-    padding: .55rem;
-    margin-top: .3rem;
-    font-size: 1rem;
-    box-sizing: border-box;
-    border: 1px solid #ced4da;
-    border-radius: .4rem;
+    width:100%;
+    padding:.55rem;
+    margin-top:.3rem;
+    font-size:1rem;
+    box-sizing:border-box;
+    border:1px solid #ced4da;
+    border-radius:.4rem;
   }
 
-  input[type=number] {max-width: 100%;}   /* full width on phones */
-  textarea {resize: vertical;}
-
   button[type=submit] {
-    margin-top: 1rem;
-    width: 100%;
-    background: #007bff;
-    color: #fff;
-    border: none;
-    padding: .7rem;
-    font-size: 1rem;
-    border-radius: .4rem;
-    cursor: pointer;
+    margin-top:1rem;
+    width:100%;
+    background:#007bff;
+    color:#fff;
+    border:none;
+    padding:.7rem;
+    font-size:1rem;
+    border-radius:.4rem;
+    cursor:pointer;
   }
   button[type=submit]:hover {background:#0056b3;}
 
-  .msg {
-    display: block;
-    margin-top: .6rem;
-    font-size: .9rem;
-    color: #d9534f;
-  }
+  .msg {margin-top:.6rem;font-size:.9rem;color:#d9534f;display:block;}
 
-  /* ---------- Action Buttons ----------
-   * Stacked vertically on a phone, but they stay left‑aligned for a tidy look.
-   */
+  /* ---------- Action Buttons (full width, stacked) ---------- */
   #actions {
-    width: 90%;
-    max-width: 480px;
-    margin-top: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: .6rem;
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    gap:.6rem;
+    padding:1rem;
   }
   #actions button {
-    padding: .6rem;
-    font-size: .95rem;
-    border: none;
-    border-radius: .4rem;
-    cursor: pointer;
+    padding:.6rem;
+    font-size:.95rem;
+    border:none;
+    border-radius:.4rem;
+    cursor:pointer;
+    color:#fff;
   }
-  #listBtn    {background:#28a745; color:#fff;}
-  #deleteBtn  {background:#dc3545; color:#fff;}
-  #exportBtn  {background:#17a2b8; color:#fff;}
+  #listBtn   {background:#28a745;}
+  #deleteBtn {background:#dc3545;}
+  #exportBtn {background:#17a2b8;}
   #actions button:hover {opacity:.9;}
 
-  /* ---------- Table ----------
-   * Makes the table scrollable when it overflows the viewport width.
-   */
+  /* ---------- Table (scrollable if needed) ---------- */
   #recordsContainer {
-    width: 90%;
-    max-width: 480px;
-    margin-top: 1.5rem;
-    overflow-x: auto;
+    flex:1;               /* take remaining vertical space */
+    overflow-x:auto;
+    padding:1rem;
   }
   table {
-    width: 100%;
-    border-collapse: collapse;
+    width:100%;
+    border-collapse:collapse;
     background:#fff;
     font-size:.9rem;
   }
   th, td {
-    border: 1px solid #dee2e6;
-    padding: .45rem;
-    text-align: left;
+    border:1px solid #dee2e6;
+    padding:.45rem;
+    text-align:left;
   }
   th {background:#e9ecef;}
 </style>
@@ -185,7 +167,7 @@ function addRecord(rec) {
   return tx.complete;
 }
 function getAllRecords() {
-  return new Promise((res, rej) => {
+  return new Promise((res,rej) => {
     const tx = db.transaction(STORE_NAME, 'readonly');
     const store = tx.objectStore(STORE_NAME);
     const req = store.getAll();
@@ -194,7 +176,7 @@ function getAllRecords() {
   });
 }
 function clearAllRecords() {
-  return new Promise((res, rej) => {
+  return new Promise((res,rej) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
     const req = store.clear();
@@ -231,7 +213,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const remark    = form.remark.value.trim();
 
     if (isNaN(systolic)||isNaN(diastolic)||isNaN(heartRate)) {
-      msg.textContent = 'Please enter valid numeric values.';
+      msg.textContent = 'Please enter valid numbers.';
       return;
     }
 
@@ -253,65 +235,4 @@ document.addEventListener('DOMContentLoaded', async () => {
       msg.style.color = '#d9534f';
       msg.textContent = 'Save failed.';
     }
-    setTimeout(()=>msg.textContent='',3000);
-  });
-
-  document.getElementById('listBtn').addEventListener('click', async () => {
-    const data = await getAllRecords();
-    renderTable(data);
-  });
-
-  document.getElementById('deleteBtn').addEventListener('click', async () => {
-    if (!confirm('⚠️  Delete EVERY record? This cannot be undone.')) return;
-    await clearAllRecords();
-    document.getElementById('recordsContainer').innerHTML = '';
-    alert('All records removed.');
-  });
-
-  document.getElementById('exportBtn').addEventListener('click', async () => {
-    const data = await getAllRecords();
-    if (!data.length) { alert('No data to export.'); return; }
-    const csv = toCSV(data);
-    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const now = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-    a.download = `bp-records-${now}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-});
-
-/* ---------- Table render ---------- */
-function renderTable(arr) {
-  const container = document.getElementById('recordsContainer');
-  if (!arr.length) {
-    container.innerHTML = '<p>No records yet.</p>';
-    return;
-  }
-
-  const table = document.createElement('table');
-  const head = `<thead>
-    <tr>
-      <th>#</th><th>Timestamp</th><th>Systolic</th><th>Diastolic</th><th>HR</th><th>Remark</th>
-    </tr></thead>`;
-  const body = arr.map(r => {
-    const d = new Date(r.timestamp);
-    return `<tr>
-      <td>${r.id}</td>
-      <td>${d.toLocaleString()}</td>
-      <td>${r.systolic}</td>
-      <td>${r.diastolic}</td>
-      <td>${r.heartRate}</td>
-      <td>${r.remark||''}</td>
-    </tr>`;
-  }).join('');
-  table.innerHTML = head + `<tbody>${body}</tbody>`;
-  container.innerHTML = '';
-  container.appendChild(table);
-}
-</script>
-
-</body>
-</html>
+    setTimeout(()=>msg.textContent='',300
