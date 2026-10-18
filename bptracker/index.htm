@@ -125,7 +125,7 @@
 </style>
 </head>
 <body>
-
+*Record is only saved locally on your device (Phone / Computer).
 <form id="bpForm">
   <label for="systolic">Systolic (mm Hg)</label>
   <input type="number" id="systolic" name="systolic" min="0" required>
@@ -140,7 +140,7 @@
   <textarea id="remark" name="remark" rows="2"
             placeholder="e.g. after exercise, taken while seated…"></textarea>
 
-  <button type="submit">Save Record</button>
+  <button type="submit">Save on Phone / Computer</button>
   <span class="msg" id="msg"></span>
 </form>
 
@@ -159,6 +159,19 @@ const STORE_NAME = 'readings';
 const DB_VERSION = 1;
 let db;
 
+/* ---------- Helper: format timestamp ---------- */
+function formatTimestamp(date) {
+  const pad = n => String(n).padStart(2, '0');
+  const year   = date.getFullYear();
+  const month  = pad(date.getMonth() + 1);   // months are 0‑based
+  const day    = pad(date.getDate());
+  const hour   = pad(date.getHours());
+  const minute = pad(date.getMinutes());
+  const second = pad(date.getSeconds());
+  return `${year}/${month}/${day} ${hour}:${minute}:${second}`;
+}
+
+/* ---------- Open / create DB ---------- */
 function openDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -203,7 +216,7 @@ function toCSV(arr) {
   const header = ['id','timestamp','systolic','diastolic','heartRate','remark'];
   const rows = arr.map(r => [
     r.id,
-    new Date(r.timestamp).toISOString(),
+    r.timestamp,                     // already in YYYY/MM/DD HH:MM:SS
     r.systolic,
     r.diastolic,
     r.heartRate,
@@ -233,7 +246,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const rec = {
-      timestamp: Date.now(),
+      timestamp: formatTimestamp(new Date()), // <-- formatted string
       systolic,
       diastolic,
       heartRate,
@@ -293,17 +306,15 @@ function renderTable(arr) {
     <tr>
       <th>#</th><th>Timestamp</th><th>Systolic</th><th>Diastolic</th><th>HR</th><th>Remark</th>
     </tr></thead>`;
-  const body = arr.map(r => {
-    const d = new Date(r.timestamp);
-    return `<tr>
+  const body = arr.map(r => `
+    <tr>
       <td>${r.id}</td>
-      <td>${d.toLocaleString()}</td>
+      <td>${r.timestamp}</td>
       <td>${r.systolic}</td>
       <td>${r.diastolic}</td>
       <td>${r.heartRate}</td>
       <td>${r.remark||''}</td>
-    </tr>`;
-  }).join('');
+    </tr>`).join('');
   table.innerHTML = head + `<tbody>${body}</tbody>`;
   container.innerHTML = '';
   container.appendChild(table);
