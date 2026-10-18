@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blood Pressure Recorder</title>
+<style>
+  body {font-family: Arial,sans-serif; margin:2rem; background:#f8f9fa;}
+  h1 {color:#343a40;}
+  form {background:#fff; padding:1.5rem; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,.1);}
+  label {display:block; margin-top:.8rem; font-weight:600;}
+  input, textarea {width:100%; padding:.5rem; margin-top:.2rem; box-sizing:border-box;}
+  input[type=number] {max-width:120px;}
+  button {margin-top:1rem; padding:.6rem 1.2rem; border:none; border-radius:4px; cursor:pointer;}
+  #actions button {margin-right:.5rem;}
+  table {width:100%; border-collapse:collapse; margin-top:2rem; background:#fff;}
+  th, td {border:1px solid #dee2e6; padding:.5rem; text-align:left;}
+  th {background:#e9ecef;}
+  .msg {margin-top:1rem; color:#d9534f;}
+</style>
+</head>
+<body>
+
+<h1>Blood Pressure Recorder</h1>
+
+<form id="bpForm">
+  <label for="systolic">Systolic (mm Hg)</label>
+  <input type="number" id="systolic" name="systolic" min="0" placeholder="120" required>
+
+  <label for="diastolic">Diastolic (mm Hg)</label>
+  <input type="number" id="diastolic" name="diastolic" placeholder="80" min="0" required>
+
+  <label for="hr">Heart-Rate (bpm)</label>
+  <input type="number" id="hr" name="hr" min="0" placeholder="75" required>
+
+  <label for="remark">Remark (optional)</label>
+  <textarea id="remark" name="remark" rows="2" placeholder="e.g. after exercise, taken while seated"></textarea>
+
+  <button type="submit">Save Record</button>
+  <span class="msg" id="msg"></span>
+</form>
+
+<div id="actions" style="margin-top:2rem;">
+  <button id="listBtn">List All Records</button>
+  <button id="deleteBtn">Delete All Records</button>
+  <button id="exportBtn">Export as CSV</button>
+</div>
+
+<!-- Placeholder for the records table -->
+<div id="recordsContainer"></div>
+
+<script>
+/* ---------- IndexedDB Setup ---------- */
+const DB_NAME = 'bpRecorderDB';
+const STORE_NAME = 'readings';
+const DB_VERSION = 1;
+let db;
+
+/**
+ * Open (or create) the IndexedDB database.
+ */
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      db = request.result;
+      resolve(db);
+    };
+    request.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+        store.createIndex('timestamp', 'timestamp', { unique: false });
+      }
+    };
+  });
+}
+
+/* ---------- Helper Functions ---------- */
+
+/**
+ * Add a new record.
+ */
+async function addRecord(record) {
+  const tx = db.transaction(STORE_NAME, 'readwrite');
+  const store = tx.objectStore(STORE_NAME);
+  await store.add(record);
+  return tx.complete;
+}
+
+/**
+ * Retrieve *all* records.
+ */
+function getAllRecords() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+/**
+ * Delete every record.
+ */
+function clearAllRecords() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const request = store.clear();
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+/**
+ * Convert an array of objects to CSV text.
+ */
+function toCSV(data) {
+  const header = ['id', 'timestamp', 'systolic', 'diastolic', 'heartRate', 'remark'];
+  const rows = data.map(r => [
+    r.id,
+    new Date(r.timestamp).toISOString(),
+    r.systolic,
+    r.diastolic,
+    r.heartRate,
+    r.remark ? `"${r.remark.replace(/"/g, '""')}"` : ''
+  ].join(','));
+
+  return [header.join(','), ...rows].join('\r\n');
+}
+
+/* ---------- UI Interaction ---------- */
+document.addEventListener('DOMContentLoaded', async () => {
+  await openDB();
+
+  const form = document.getElementById('bpForm');
+  const msgEl = document.getElementById('msg');
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const systolic = +form.systolic.value;
+    const diastolic = +form.diastolic.value;
+    const heartRate = +form.hr.value;
+    const remark = form.remark.value.trim();
+
+    if (isNaN(systolic) || isNaN(diastolic) || isNaN(heartRate)) {
+      msgEl.textContent = 'Please enter valid numbers.';
+      return;
+    }
+
+    const record = {
+      timestamp: Date.now(),
+      systolic,
+      diastolic,
+      heartRate,
+      remark: remark || null
+    };
+
+    try {
+      await addRecord(record);
+      msgEl.style.color = '#28a745';
+      msgEl.textContent = 'Record saved!';
+      form.reset();
+      // optional: refresh list automatically
+    } catch (err) {
+      console.error(err);
+      msgEl.style.color = '#d9534f';
+      msgEl.textContent = 'Failed to save record.';
+    }
+    setTimeout(() => (msgEl.textContent = ''), 3000);
+  });
+
+  /* ----------------- Buttons ----------------- */
+  document.getElementById('listBtn').addEventListener('click', async () => {
+    const records = await getAllRecords();
+    renderTable(records);
+  });
+
+  document.getElementById('deleteBtn').addEventListener('click', async () => {
+    if (!confirm('??  Are you sure you want to delete EVERY record? This cannot be undone.')) return;
+    await clearAllRecords();
+    document.getElementById('recordsContainer').innerHTML = '';
+    alert('All records deleted.');
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', async () => {
+    const records = await getAllRecords();
+    if (!records.length) {
+      alert('No data to export.');
+      return;
+    }
+    const csv = toCSV(records);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    const now = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    a.download = `bp-records-${now}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+});
+
+/* ----------------- Rendering ----------------- */
+function renderTable(data) {
+  const container = document.getElementById('recordsContainer');
+  if (!data.length) {
+    container.innerHTML = '<p>No records found.</p>';
+    return;
+  }
+
+  const table = document.createElement('table');
+  const thead = `<thead>
+    <tr>
+      <th>#</th>
+      <th>Timestamp</th>
+      <th>Systolic</th>
+      <th>Diastolic</th>
+      <th>Heart-Rate</th>
+      <th>Remark</th>
+    </tr>
+  </thead>`;
+  const tbody = data
+    .map(r => {
+      const date = new Date(r.timestamp);
+      const fmt = date.toLocaleString();
+      return `<tr>
+        <td>${r.id}</td>
+        <td>${fmt}</td>
+        <td>${r.systolic}</td>
+        <td>${r.diastolic}</td>
+        <td>${r.heartRate}</td>
+        <td>${r.remark ? r.remark : ''}</td>
+      </tr>`;
+    })
+    .join('');
+  table.innerHTML = thead + `<tbody>${tbody}</tbody>`;
+  container.innerHTML = '';
+  container.appendChild(table);
+}
+</script>
+
+</body>
+</html>
