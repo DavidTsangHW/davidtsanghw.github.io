@@ -40,7 +40,7 @@
 </form>
 
 <div id="actions" style="margin-top:2rem;">
-  <button id="listBtn">List All Records</button>
+  <button id="listBtn">List All Local Records</button>
   <button id="deleteBtn">Delete All Records</button>
   <button id="exportBtn">Export as CSV</button>
 </div>
@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       await addRecord(record);
       msgEl.style.color = '#28a745';
-      msgEl.textContent = 'Record saved!';
+      msgEl.textContent = 'Saved locally';
       form.reset();
       // optional: refresh list automatically
     } catch (err) {
