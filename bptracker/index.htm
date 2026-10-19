@@ -18,7 +18,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-	min-height:100vh;
+    min-height:100vh;
   }
 
   h1 {
@@ -100,7 +100,7 @@
   #listBtn    {background:#28a745; color:#fff;}
   #deleteBtn  {background:#dc3545; color:#fff;}
   #exportBtn  {background:#17a2b8; color:#fff;}
-   #importBtn  {background:#6c757d; color:#fff;}   /* new button */
+  #importBtn  {background:#6c757d; color:#fff;}   /* new button */
   #actions button:hover {opacity:.9;}
 
   /* hide the native file picker – we trigger it programmatically */
@@ -206,15 +206,43 @@ function addRecord(rec) {
     tx.onerror    = () => reject(tx.error);
   });
 }
+
+/* Return all records **sorted by timestamp** (newest first).
+ * The store already has an index named “timestamp”.  Using the index
+ * guarantees the order without pulling the whole set into memory
+ * first.  If for any reason the index is missing we fall back to a
+ * simple client‑side sort – the formatted timestamp string is ISO‑like
+ * (YYYY/MM/DD HH:MM:SS) so lexical order equals chronological order.
+ */
 function getAllRecords() {
-  return new Promise((res, rej) => {
+  return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readonly');
     const store = tx.objectStore(STORE_NAME);
-    const req = store.getAll();
-    req.onsuccess = () => res(req.result);
-    req.onerror = () => rej(req.error);
+
+    // Try to read via the timestamp index (newest → oldest)
+    let req;
+    let usedIndex = true;
+    try {
+      const index = store.index('timestamp');
+      req = index.getAll(null, 'prev');   // “prev” = descending
+    } catch (e) {
+      // Index might not exist – fallback to regular getAll()
+      usedIndex = false;
+      req = store.getAll();
+    }
+
+    req.onsuccess = () => {
+      const result = req.result || [];
+      // If we used the fallback, sort manually (newest first)
+      if (!usedIndex) {
+        result.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+      }
+      resolve(result);
+    };
+    req.onerror = () => reject(req.error);
   });
 }
+
 function clearAllRecords() {
   return new Promise((res, rej) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -224,6 +252,7 @@ function clearAllRecords() {
     req.onerror = () => rej(req.error);
   });
 }
+
 function toCSV(arr) {
   const header = ['id','timestamp','systolic','diastolic','heartRate','remark'];
   const rows = arr.map(r => [
@@ -368,19 +397,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let added = 0, duplicates = 0;
     for (const row of rows) {
-      // Expect: id,timestamp,systolic,diastolic,heartRate,remark
+      // Expected columns: id,timestamp,systolic,diastolic,heartRate,remark
       const timestamp = row.timestamp?.trim();
       const systolic  = Number(row.systolic);
       const diastolic = Number(row.diastolic);
       const heartRate = Number(row.heartRate);
-      // Undo the quoting that exportCSV adds
+      // Undo quoting added by exportCSV
       let remark = row.remark ?? '';
       if (remark.startsWith('"') && remark.endsWith('"')) {
         remark = remark.slice(1, -1).replace(/""/g,'"');
       }
       remark = remark.trim() || null;
 
-      // Basic validation – skip rows that are clearly broken
+      // Basic validation – skip clearly broken rows
       if (!timestamp || isNaN(systolic)||isNaN(diastolic)||isNaN(heartRate)) continue;
 
       const key = `${timestamp}|${systolic}|${diastolic}|${heartRate}|${remark||''}`;
@@ -400,10 +429,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     alert(`Import finished.\nAdded: ${added}\nDuplicates ignored: ${duplicates}`);
-    // reset the file input so the same file can be chosen again if needed
+    // Reset the file input so the same file can be re‑selected if needed
     fileInput.value = '';
   });
-
 });
 
 /* ---------- Table render ---------- */
